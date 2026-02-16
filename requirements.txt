@@ -1,0 +1,9 @@
+tree-sitter>=0.20.1
+tree-sitter-solidity>=0.1.2
+gitpython>=3.1.40
+requests>=2.31.0
+pydantic>=2.5.0
+colorlog>=6.7.0
+litellm>=1.0.0
+docker>=6.1.3
+web3>=6.15.0

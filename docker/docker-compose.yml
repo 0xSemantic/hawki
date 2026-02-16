@@ -1,0 +1,23 @@
+# --------------------
+# File: docker/docker-compose.yml
+# --------------------
+# Simple compose file for running Hawk-i CLI in a container.
+# Mount a local repository to scan.
+
+version: '3.8'
+
+services:
+  hawki:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: hawki:latest
+    container_name: hawki-cli
+    volumes:
+      # Mount your repo to /repo inside container
+      - ./:/repo:ro
+      # Mount a local directory for reports
+      - ./hawki_reports:/home/hawki/hawki_reports
+    working_dir: /home/hawki
+    # Override entrypoint to run a scan
+    command: scan /repo

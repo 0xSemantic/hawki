@@ -1,0 +1,10 @@
+# Include all dynamic directories recursively
+include hawki/core/static_rule_engine/rules/*.py
+include hawki/core/ai_engine/prompt_templates/*.json
+include hawki/core/exploit_sandbox/attack_scripts/*.py
+include hawki/core/monitoring/watchers/*.py
+
+# Include scripts and docs
+include scripts/*.py
+include README.md
+include LICENSE

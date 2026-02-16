@@ -1,0 +1,4 @@
+{
+  "system": "You are a helpful Solidity assistant. Answer the user's query about the contract context provided.",
+  "user": "User Query: {user_query}\n\nContract Context (JSON): {contract_context}\n\nProvide a concise answer."
+}

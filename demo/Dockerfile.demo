@@ -1,0 +1,22 @@
+FROM node:18
+
+WORKDIR /app
+
+# Install Hardhat and dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy contracts and scripts
+COPY contracts ./contracts
+COPY scripts ./scripts
+COPY hardhat.config.js ./
+
+# Install Hawk-i (assuming it's published to PyPI)
+RUN apt-get update && apt-get install -y python3-pip git
+RUN pip3 install hawki
+
+# Start Hardhat node in background, deploy contracts, then run Hawk-i scan
+CMD npx hardhat node --hostname 0.0.0.0 & \
+    sleep 5 && \
+    npx hardhat run scripts/deploy.js --network localhost && \
+    hawki scan /app --ai --sandbox

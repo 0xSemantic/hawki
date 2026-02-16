@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hawki"
+version = "0.6.0"  # Phase 6 version
+description = "Holistic Analysis for Web3 Kode & Infrastructure – Security intelligence platform"
+readme = "README.md"
+authors = [{name = "0xSemantic", email = "0xsemantic@example.com"}]
+license = {text = "MIT"}
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "tree-sitter>=0.20.1",
+    "tree-sitter-solidity>=0.1.2",
+    "gitpython>=3.1.40",
+    "requests>=2.31.0",
+    "pydantic>=2.5.0",
+    "colorlog>=6.7.0",
+    "litellm>=1.0.0",
+    "docker>=6.1.3",
+    "web3>=6.15.0",
+]
+
+[project.scripts]
+hawki = "cli.hawki_cli:main"
+
+[tool.setuptools.packages.find]
+include = ["hawki*", "cli*"]
+
+# Include package data (dynamic directories)
+[tool.setuptools.package-data]
+"hawki.core.static_rule_engine" = ["rules/*.py"]
+"hawki.core.ai_engine" = ["prompt_templates/*.json"]
+"hawki.core.exploit_sandbox" = ["attack_scripts/*.py"]
+"hawki.core.monitoring" = ["watchers/*.py"]
+"hawki" = ["py.typed"]

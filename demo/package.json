@@ -1,0 +1,16 @@
+{
+  "name": "hawki-demo",
+  "version": "1.0.0",
+  "description": "Vulnerable contracts to test Hawk-i",
+  "scripts": {
+    "deploy": "hardhat run scripts/deploy.js --network localhost"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "chai": "^4.3.7",
+    "ethereum-waffle": "^4.0.10",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.17.0"
+  }
+}
