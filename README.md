@@ -18,6 +18,7 @@ Hawk‑i is an open‑source smart contract security intelligence platform that 
 - [Features](#-features)
 - [Quick Start](#-quick-start)
 - [Advanced Usage](#-advanced-usage)
+- [Troubleshooting](#-troubleshooting)
 - [Demo Suite](#-demo-suite)
 - [Project Structure](#-project-structure)
 - [Contributing](#-contributing)
@@ -216,6 +217,128 @@ All dynamic components are auto‑discovered – just drop a file in the corresp
 - **Prompt templates**: `hawki/core/ai_engine/prompt_templates/` (JSON files with `system` and `user` fields)
 - **Attack scripts**: `hawki/core/exploit_sandbox/attack_scripts/` (Python scripts that use `web3.py` and exit with code `0` on success)
 - **Watchers**: `hawki/core/monitoring/watchers/` (Python classes inheriting from `Watcher`)
+
+---
+
+## 🔧 Troubleshooting
+
+Here are solutions to common issues you might encounter while using Hawk‑i.
+
+### `hawki: command not found` after pip install
+
+**Problem:** The `hawki` command is not available in your terminal after installation.
+
+**Solution:**  
+- Ensure your `pip` is up‑to‑date:  
+  ```bash
+  pip install --upgrade pip
+  ```
+- Reinstall Hawk‑i with the `--force-reinstall` flag:  
+  ```bash
+  pip install --force-reinstall hawki
+  ```
+- If you're using a virtual environment, make sure it's activated (you should see `(venv)` in your prompt).  
+- As a fallback, you can always run Hawk‑i using the module syntax:  
+  ```bash
+  python -m cli.hawki_cli scan ./demo
+  ```
+
+### Docker: Report files not saved on host
+
+**Problem:** When running Hawk‑i in Docker, the report is generated but not visible on your host machine.
+
+**Solution:**  
+Mount a host directory to the container’s report location. By default, reports are saved to `/home/hawki/hawki_reports/` inside the container. Use the `-v` flag to bind‑mount a host directory:
+
+```bash
+docker run --rm \
+  -v $(pwd)/demo:/repo \
+  -v $(pwd)/hawki_reports:/home/hawki/hawki_reports \
+  hawki:latest scan /repo
+```
+
+Now the report will appear in `./hawki_reports` on your host.
+
+### Docker image build fails or cannot find image
+
+**Problem:** The Docker image fails to build, or `hawki-sandbox:latest` is not found.
+
+**Solution:**  
+- Ensure Docker is installed and running (`docker info`).  
+- Your user must have permission to run Docker. On Linux, you may need to add yourself to the `docker` group or use `sudo`.  
+- If the image is missing, the sandbox will attempt to build it automatically. This may take a few minutes the first time. Let it complete without interrupting (Ctrl+C will abort the build).
+
+### Web3.py middleware import errors
+
+**Problem:** Errors like `cannot import name 'geth_poa_middleware' from 'web3.middleware'`.
+
+**Solution:**  
+This occurs because the import path for `geth_poa_middleware` changed in newer versions of web3.py. We've included a compatibility layer in Hawk‑i, but if you still encounter issues, try updating web3.py:
+
+```bash
+pip install --upgrade web3
+```
+
+If the problem persists, please open an issue on GitHub.
+
+### AI analysis fails with "API key not valid"
+
+**Problem:** When using `--ai`, you see an error about an invalid API key.
+
+**Solution:**  
+- Provide a valid API key via `--api-key`, environment variable, or `.env` file (see [AI Configuration](#ai-configuration)).  
+- For Google Gemini, ensure you have enabled the Generative Language API in your Google Cloud console and that the key is correct.  
+- LiteLLM expects the key to be set as `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` depending on the provider.
+
+### `pkgutil` errors during rule discovery
+
+**Problem:** Errors like `AttributeError: 'PosixPath' object has no attribute 'startswith'` when loading rules.
+
+**Solution:**  
+This was a bug in early versions and has been fixed. Update to the latest Hawk‑i:
+
+```bash
+pip install --upgrade hawki
+```
+
+### Monitor shows "Path is not a Git repository" repeatedly
+
+**Problem:** The `repo_commit_watcher` logs a warning every few seconds because the target directory is not a Git repository.
+
+**Solution:**  
+This is normal – the watcher is designed to monitor Git repos. If you don't need commit monitoring, disable that watcher by removing it from your configuration, or simply ignore the messages. The warning is logged only once per check cycle, not continuously.
+
+### Sandbox fails with "Image not found" but Docker is installed
+
+**Problem:** The sandbox tries to build the image but fails with a "not found" error.
+
+**Solution:**  
+- Check that the Docker daemon is running: `systemctl status docker` (Linux) or check Docker Desktop (macOS/Windows).  
+- Ensure your user has permission to access Docker. You can test with `docker run hello-world`.  
+- If the build is interrupted (e.g., by Ctrl+C), remove any partially built images:  
+  ```bash
+  docker rmi hawki-sandbox:latest
+  ```
+  Then run the scan again – the image will be rebuilt.
+
+### Report files are empty or missing findings
+
+**Problem:** The scan completes but the JSON report contains no findings, even though you expect some.
+
+**Solution:**  
+- Check that your contracts are Solidity files (`.sol`) and are in the scanned directory.  
+- If you're using the demo suite, ensure the Hardhat node is running and contracts are deployed.  
+- Run without `--ai` and `--sandbox` first to verify static rules are working.  
+- Increase logging verbosity with `--verbose` to see what Hawk‑i is doing.
+
+### Still stuck?
+
+If none of the above solves your problem, please [open an issue](https://github.com/0xSemantic/hawki/issues) with:
+- The exact command you ran
+- The full error output
+- Your environment (OS, Python version, Hawk‑i version)
+
+We'll help you get back on track!
 
 ---
 
