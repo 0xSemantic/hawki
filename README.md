@@ -5,7 +5,7 @@
 Hawk‑i is an open‑source smart contract security intelligence platform that combines static analysis, AI reasoning, and exploit simulation to detect vulnerabilities across your Solidity repositories. Designed for continuous auditing, it runs locally or in your CI/CD pipeline, preserving privacy while providing deep, actionable insights.
 
 [![PyPI version](https://img.shields.io/pypi/v/hawki)](https://pypi.org/project/hawki/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/0xsemantic/hawki)](https://hub.docker.com/r/0xsemantic/hawki)
+[![Docker Pulls](https://img.shields.io/docker/pulls/levichinecherem/hawki)](https://hub.docker.com/r/0xsemantic/hawki)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Contributors](https://img.shields.io/github/contributors/0xSemantic/hawki)](https://github.com/0xSemantic/hawki/graphs/contributors)
