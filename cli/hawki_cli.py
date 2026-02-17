@@ -79,7 +79,6 @@ def scan_command(args):
 
 def monitor_command(args):
     """Handle 'monitor' subcommand."""
-    logger = logging.getLogger(__name__)
     # Build watcher configs from arguments or config file
     config = {}
     if args.config:

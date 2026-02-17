@@ -9,7 +9,7 @@ import importlib
 import pkgutil
 import logging
 from pathlib import Path
-from typing import Dict, List, Type, Any
+from typing import List, Dict, Any
 
 from .rules import BaseRule
 
@@ -25,7 +25,9 @@ class RuleEngine:
     def _discover_rules(self):
         """Dynamically import all modules in the rules package and instantiate rule classes."""
         package = "hawki.core.static_rule_engine.rules"
-        for _, module_name, _ in pkgutil.iter_modules([Path(__file__).parent / "rules"]):
+        # Convert Path to string to avoid AttributeError in pkgutil
+        rules_dir = str(Path(__file__).parent / "rules")
+        for _, module_name, _ in pkgutil.iter_modules([rules_dir]):
             full_module = f"{package}.{module_name}"
             try:
                 module = importlib.import_module(full_module)

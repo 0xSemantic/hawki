@@ -8,7 +8,8 @@ Manages prompt rendering, calling the adapter, and parsing responses.
 
 import json
 import logging
-from typing import Optional, Dict, Any, List
+from pathlib import Path
+from typing import Optional, Dict, Any
 
 from .lite_llm_adapter import LiteLLMAdapter
 from .prompt_manager import PromptManager

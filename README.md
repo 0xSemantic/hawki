@@ -178,13 +178,35 @@ python scripts/deploy_helpers.py readme /path/to/report.json --output AUDIT.md
 
 ### AI Configuration
 
-Hawk‑i uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM providers. Set your API key via environment variable or the `--api-key` flag.
+Hawk‑i uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM providers. You can set your API key in three ways (listed in order of precedence):
+
+1. **Command‑line argument** `--api-key` – takes highest priority.
+2. **Environment variable** – set the corresponding variable for your provider (see table below).
+3. **`.env` file** – if you prefer to keep keys in a file, you can load it manually (see instructions).
 
 | Provider   | Model example                     | Environment variable |
 |------------|-----------------------------------|----------------------|
 | Google Gemini | `gemini/gemini-1.5-flash`       | `GEMINI_API_KEY`     |
 | OpenAI        | `openai/gpt-4`                   | `OPENAI_API_KEY`     |
 | Anthropic     | `anthropic/claude-3-haiku-20240307` | `ANTHROPIC_API_KEY` |
+
+#### Persistent API Key Setup
+
+- **Using environment variables (recommended)**  
+  Add the export line to your shell profile (`~/.bashrc`, `~/.zshrc`, or `~/.profile`):
+  ```bash
+  export GEMINI_API_KEY="your-key"
+  ```
+  Then reload: `source ~/.bashrc`. After this, you can run `hawki scan --ai` without the `--api-key` flag.
+
+- **Using a `.env` file**  
+  Hawk‑i does not load `.env` automatically, but you can use `python-dotenv` to load it before running:
+  ```bash
+  pip install python-dotenv
+  echo "GEMINI_API_KEY=your-key" > .env
+  python -c "from dotenv import load_dotenv; load_dotenv()" && hawki scan . --ai
+  ```
+  For convenience, you can create a small wrapper script that loads the `.env` file.
 
 ### Adding Custom Rules, Prompts, or Attack Scripts
 

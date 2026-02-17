@@ -12,10 +12,9 @@ Provides functions to run scans on compiled contracts and generate audit reports
 
 import json
 import logging
-import subprocess
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -116,14 +115,14 @@ def generate_audit_readme(report_path: Path, output_md: Path) -> None:
     findings = report.get("findings", [])
     summary = report.get("summary", {})
     with open(output_md, 'w') as f:
-        f.write(f"# Hawk-i Security Audit Report\n\n")
+        f.write("# Hawk-i Security Audit Report\n\n")
         f.write(f"**Scan Time:** {report.get('scan_timestamp', 'unknown')}\n\n")
-        f.write(f"## Summary\n")
+        f.write("## Summary\n")
         f.write(f"- Total Findings: {summary.get('total_findings', 0)}\n")
         f.write(f"- High: {summary.get('severity_counts', {}).get('HIGH', 0)}\n")
         f.write(f"- Medium: {summary.get('severity_counts', {}).get('MEDIUM', 0)}\n")
         f.write(f"- Low: {summary.get('severity_counts', {}).get('LOW', 0)}\n\n")
-        f.write(f"## Findings\n\n")
+        f.write("## Findings\n\n")
         for idx, fnd in enumerate(findings, 1):
             f.write(f"### {idx}. {fnd.get('rule', 'Unknown')} - {fnd.get('severity', 'INFO')}\n")
             f.write(f"**Location:** {fnd.get('location', 'N/A')}\n\n")

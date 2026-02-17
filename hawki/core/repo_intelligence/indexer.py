@@ -11,7 +11,6 @@ import tempfile
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 import git
-import requests
 from urllib.parse import urlparse
 
 from .parser import SolidityParser

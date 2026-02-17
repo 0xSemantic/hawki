@@ -50,7 +50,7 @@ class PromptManager:
         """
         Render a template by replacing placeholders in system and user prompts.
         Placeholders are in {key} format.
-        Returns a messages list ready for LiteLLM, or None if template not found.
+        Returns a messages list ready for LitepytestLLM, or None if template not found.
         """
         template = self.get_template(name)
         if not template:

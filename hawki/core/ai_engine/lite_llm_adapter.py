@@ -8,9 +8,8 @@ Handles API key management, retries, and error logging.
 
 import logging
 import os
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, List
 
-import litellm
 from litellm import completion
 from litellm.exceptions import (
     APIConnectionError,

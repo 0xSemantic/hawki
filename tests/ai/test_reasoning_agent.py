@@ -2,7 +2,7 @@
 # File: tests/ai/test_reasoning_agent.py
 # --------------------
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from hawki.core.ai_engine.reasoning_agent import ReasoningAgent
 from hawki.core.ai_engine.llm_orchestrator import LLMOrchestrator
 

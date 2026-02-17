@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
 import git
+from git.exc import InvalidGitRepositoryError
 
 from ..watcher_base import Watcher
 
@@ -20,13 +21,27 @@ class RepoCommitWatcher(Watcher):
     def __init__(self, name: str, config: Dict[str, Any]):
         super().__init__(name, config)
         self.repo_path = Path(config.get("repo_path", ".")).resolve()
-        if not self.repo_path.exists():
-            raise ValueError(f"Repository path does not exist: {self.repo_path}")
         self.branch = config.get("branch", "main")
         self._last_commit = None
+        self._valid_repo = None  # cache validity check
+
+    def _is_git_repo(self) -> bool:
+        """Check if the path is a valid Git repository."""
+        if self._valid_repo is not None:
+            return self._valid_repo
+        try:
+            _ = git.Repo(self.repo_path)
+            self._valid_repo = True
+        except (InvalidGitRepositoryError, Exception):
+            self._valid_repo = False
+            logger.warning(f"Path is not a Git repository: {self.repo_path}")
+        return self._valid_repo
 
     def check(self) -> Optional[Dict[str, Any]]:
         """Check for new commits since last check."""
+        if not self._is_git_repo():
+            return None
+
         try:
             repo = git.Repo(self.repo_path)
             # Ensure we have the latest remote info
@@ -54,7 +69,7 @@ class RepoCommitWatcher(Watcher):
                     "message": commit.message.strip(),
                     "author": str(commit.author),
                     "timestamp": commit.committed_datetime.isoformat(),
-                    "message": f"New commit in {self.repo_path.name}: {commit.message[:50]}",
+                    "new_message": f"New commit in {self.repo_path.name}: {commit.message[:50]}",
                 }
                 self.state["last_commit"] = latest_commit
                 return event
