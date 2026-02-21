@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function withdraw() public {\n    require(msg.sender == owner, \"Not owner\"); // use msg.sender\n    // ...\n}"
+}

@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "// Use pull pattern: record withdrawal instead of sending directly\nfunction withdraw() external {\n    uint amount = pendingWithdrawals[msg.sender];\n    pendingWithdrawals[msg.sender] = 0;\n    (bool success, ) = msg.sender.call{value: amount}(\"\");\n    if (!success) {\n        pendingWithdrawals[msg.sender] = amount; // revert and retry later\n    }\n}"
+}

@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function getPrice() public view returns (uint256) {\n    // Use a TWAP oracle instead\n    uint256 price = twapOracle.consult(address(this), tokenA, tokenB, 3600);\n    return price;\n}"
+}

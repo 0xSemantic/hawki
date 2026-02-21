@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hawki"
-version = "0.6.0"  # Phase 6 version
+version = "0.7.0"  # Bumped to v0.7.0
 description = "Holistic Analysis for Web3 Kode & Infrastructure – Security intelligence platform"
 readme = "README.md"
 authors = [{name = "0xSemantic", email = "0xsemantic@example.com"}]
@@ -31,6 +31,20 @@ dependencies = [
     "litellm>=1.0.0",
     "docker>=6.1.3",
     "web3>=6.15.0",
+    "py-solc-x>=2.0.0",
+    "eth-account>=0.8.0",
+]
+
+[project.optional-dependencies]
+reports = [
+    "jinja2>=3.1.0",
+    "matplotlib>=3.7.0",
+]
+pdf = [
+    "pdfkit>=1.0.0",
+]
+all = [
+    "hawki[reports,pdf]",
 ]
 
 [project.scripts]
@@ -39,10 +53,10 @@ hawki = "cli.hawki_cli:main"
 [tool.setuptools.packages.find]
 include = ["hawki*", "cli*"]
 
-# Include package data (dynamic directories)
 [tool.setuptools.package-data]
 "hawki.core.static_rule_engine" = ["rules/*.py"]
 "hawki.core.ai_engine" = ["prompt_templates/*.json"]
 "hawki.core.exploit_sandbox" = ["attack_scripts/*.py"]
 "hawki.core.monitoring" = ["watchers/*.py"]
+"hawki.core.data_layer.reporting" = ["templates/*.md", "templates/*.html", "templates/*.json"]
 "hawki" = ["py.typed"]

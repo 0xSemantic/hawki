@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function swap(uint amountIn) public returns (uint) {\n    uint price = getTwapPrice(); // use TWAP\n    uint amountOut = amountIn * price / 1e18;\n    // ...\n}"
+}

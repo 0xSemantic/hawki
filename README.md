@@ -1,11 +1,12 @@
 # 🦅 Hawk‑i
 
-**Holistic Analysis for Web3 Kode & Infrastructure**
-
-Hawk‑i is an open‑source smart contract security intelligence platform that combines static analysis, AI reasoning, and exploit simulation to detect vulnerabilities across your Solidity repositories. Designed for continuous auditing, it runs locally or in your CI/CD pipeline, preserving privacy while providing deep, actionable insights.
+**Holistic Analysis for Web3 Kode & Infrastructure**  
+*Open‑source, privacy‑first security intelligence for smart contracts*
 
 [![PyPI version](https://img.shields.io/pypi/v/hawki)](https://pypi.org/project/hawki/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/levichinecherem/hawki)](https://hub.docker.com/r/0xsemantic/hawki)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/hawki)](https://pypi.org/project/hawki/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dw/hawki)](https://pypi.org/project/hawki/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/0xsemantic/hawki)](https://hub.docker.com/r/0xsemantic/hawki)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Contributors](https://img.shields.io/github/contributors/0xSemantic/hawki)](https://github.com/0xSemantic/hawki/graphs/contributors)
@@ -15,10 +16,18 @@ Hawk‑i is an open‑source smart contract security intelligence platform that 
 
 ## 📖 Table of Contents
 
+- [What is Hawk‑i?](#-what-is-hawk‑i)
 - [Features](#-features)
 - [Quick Start](#-quick-start)
+- [Operational Modes](#-operational-modes)
 - [Advanced Usage](#-advanced-usage)
-- [Troubleshooting](#-troubleshooting)
+  - [Audit‑Grade Reporting](#audit‑grade-reporting)
+  - [Security Score](#security-score)
+  - [Guided Remediation](#guided-remediation)
+  - [Telemetry (Opt‑In)](#telemetry-opt‑in)
+  - [CLI Reference](#cli-reference)
+  - [CI/CD Integration](#cicd-integration)
+  - [Ecosystem Integrations](#ecosystem-integrations)
 - [Demo Suite](#-demo-suite)
 - [Project Structure](#-project-structure)
 - [Contributing](#-contributing)
@@ -29,16 +38,35 @@ Hawk‑i is an open‑source smart contract security intelligence platform that 
 
 ---
 
+## 🦅 What is Hawk‑i?
+
+Hawk‑i is an **open‑source security intelligence platform** for Web3 smart contracts. It evolves beyond a simple scanner into a complete audit‑grade system that **detects, simulates, scores, and helps fix vulnerabilities** – all while respecting your privacy.
+
+Whether you're a solo developer, an auditor, or a protocol team, Hawk‑i integrates into your workflow to provide continuous, actionable security insights.
+
+**Key differentiators:**
+- **Hybrid analysis** – static rules + AI reasoning + live exploit simulation.
+- **Professional reporting** – executive summaries, risk scores, charts, and per‑finding remediation.
+- **Privacy by design** – runs locally; no code is ever sent to external servers (AI uses your own API keys).
+- **Extensible** – drop‑in rules, attack scripts, and templates.
+
+---
+
 ## ✨ Features
 
+### Core Capabilities
 - **🔍 Repository Intelligence** – Parse and index Solidity files from local folders or remote Git repos (GitHub, GitLab, etc.).
-- **📦 Static Rule Engine** – Detect 10+ common vulnerabilities (reentrancy, access control, integer overflows, etc.) with an extensible rule system.
-- **🧠 AI Reasoning** – Leverage LLMs (Gemini, OpenAI, Anthropic) to uncover logic flaws, economic exploits, and governance risks that static analysis misses.
-- **💣 Exploit Simulation Sandbox** – Automatically deploy contracts in an isolated Docker environment and run attack scripts to validate vulnerabilities.
+- **📦 Static Rule Engine** – Detect 30+ common vulnerabilities (reentrancy, access control, integer overflows, oracle manipulation, etc.) with an extensible rule system.
+- **🧠 AI Reasoning** – Leverage LLMs (Gemini, OpenAI, Anthropic, local Ollama) to uncover logic flaws, economic exploits, and governance risks that static analysis misses.
+- **💣 Exploit Simulation Sandbox** – Automatically deploy contracts in an isolated Docker environment and run attack scripts to validate vulnerabilities; results influence your risk score.
 - **⏱️ Continuous Monitoring** – Watch repositories and deployed contracts for changes, and get alerts via file or console.
-- **🔌 CI/CD Integration** – Plug into GitHub Actions or GitLab CI to fail builds on high‑severity issues.
-- **🛠️ Ecosystem Friendly** – Works with Foundry, Hardhat, and Remix projects out of the box.
-- **🔒 Privacy First** – Runs entirely on your machine; no code is sent to external servers unless you enable AI with your own API keys.
+
+### v0.7.0 – Intelligence & Reporting Upgrade
+- **📊 Audit‑Grade Reporting (ARS v2)** – Generate professional reports with executive summary, security score (0–100), severity charts, and per‑finding remediation.
+- **🛡️ Guided Remediation Engine** – Every finding includes a context‑aware fix snippet, auto‑populated with your code’s variable names.
+- **📈 Security Score** – A deterministic 0–100 score based on finding severity and exploit success, with clear risk bands.
+- **📡 Telemetry (Opt‑In)** – Anonymous usage metrics to demonstrate ecosystem impact (no code, no repo names).
+- **🧩 Expanded Vulnerability Library** – 30 fully documented vulnerabilities, each with detection, exploit script, and fix template.
 
 ---
 
@@ -46,75 +74,243 @@ Hawk‑i is an open‑source smart contract security intelligence platform that 
 
 ### Installation
 
-#### Option 1: Install from PyPI (recommended)
-
+**Option 1: Install from PyPI (recommended)**
 ```bash
 pip install hawki
 ```
 
-#### Option 2: Use Docker
-
+**Option 2: Use Docker**
 ```bash
 docker pull 0xsemantic/hawki:latest
-docker run --rm -v $(pwd):/repo hawki scan /repo
+docker run --rm -v $(pwd):/repo 0xsemantic/hawki scan /repo
 ```
 
-#### Option 3: Install from source
-
+**Option 3: Install from source**
 ```bash
 git clone https://github.com/0xSemantic/hawki.git
 cd hawki
 pip install -e .
 ```
 
-### Basic Usage
-
-Scan a local repository:
-
+### Basic Scan
 ```bash
 hawki scan /path/to/your/project
 ```
+This runs static rules only (Minimal mode) and outputs a simple JSON report (legacy format). For the new audit‑grade report, use `--format`.
 
-Scan a remote GitHub repository:
-
+### Full Audit with AI + Sandbox
 ```bash
-hawki scan https://github.com/owner/repo.git
+hawki scan /path --ai --ai-model openai/gpt-4 --api-key YOUR_KEY --sandbox --format pdf --telemetry
+```
+- `--ai` enables AI reasoning (requires an API key).
+- `--sandbox` runs exploit simulations (requires Docker).
+- `--format pdf` generates a professional PDF report.
+- `--telemetry` opts in to anonymous usage stats.
+
+### Generate a Report from Previous Scan
+```bash
+hawki report --input findings.json --format html --output report.html
 ```
 
-Enable AI analysis (you need an API key):
-
+### View Security Score
 ```bash
-hawki scan /path --ai --ai-model gemini/gemini-1.5-flash --api-key YOUR_KEY
+hawki score findings.json
 ```
 
-Run exploit simulation:
-
+### Show Local Telemetry
 ```bash
-hawki scan /path --sandbox
+hawki metrics
 ```
 
-Monitor a repository for new commits:
-
+### Monitor a Repository
 ```bash
-hawki monitor /path/to/repo --interval 60 --alert-log alerts.jsonl
-```
-
-Monitor a deployed contract:
-
-```bash
-hawki monitor --contract-address 0x123... --rpc-url https://mainnet.infura.io/v3/...
+hawki monitor /path/to/repo --interval 60 --alert-log alerts.txt
 ```
 
 ---
 
+## ⚙️ Operational Modes
+
+Hawk‑i adapts to your environment and privacy needs:
+
+| Mode          | Static Rules | AI   | Sandbox | Docker Required |
+|---------------|--------------|------|---------|-----------------|
+| **Minimal**   | ✅           | ❌   | ❌      | ❌              |
+| **Enhanced**  | ✅           | ✅   | ❌      | ❌              |
+| **Full Audit**| ✅           | ✅   | ✅      | ✅              |
+
+Reports indicate which mode was used and adapt content accordingly (e.g., omit exploit steps if sandbox disabled).
+
+---
+
 ## 🔧 Advanced Usage
+
+### Audit‑Grade Reporting
+
+The `hawki scan` command with `--format` generates a report using the new **Audit‑Grade Report System (ARS v2)**. Reports include:
+
+- **Executive Summary** – total contracts, severity counts, security score, risk classification, mode used.
+- **Vulnerability Breakdown** – pie chart (severity) + bar chart (type) + fallback table.
+- **Per‑Finding Details** – title, severity, file/line, vulnerable code, recommended fix, explanation, impact, exploit steps (if sandbox succeeded).
+- **Simulation Metrics** – success rate, balance deltas, gas used.
+
+Formats: Markdown (default), JSON, HTML, PDF (optional dependencies).
+
+**Example Markdown snippet:**
+```markdown
+## 🔍 Detailed Findings
+### F001: Reentrancy in withdraw() (CRITICAL)
+- **File:** contracts/Vault.sol
+- **Line:** 42
+
+**Vulnerable Code:**
+```solidity
+function withdraw() external {
+    uint bal = balances[msg.sender];
+    (bool success,) = msg.sender.call{value: bal}("");
+    require(success);
+    balances[msg.sender] = 0;
+}
+```
+
+**Recommended Fix:**
+```solidity
+function withdraw() external nonReentrant {
+    uint bal = balances[msg.sender];
+    balances[msg.sender] = 0;
+    (bool success,) = msg.sender.call{value: bal}("");
+    require(success);
+}
+```
+
+**Explanation:** The function makes an external call before updating state, allowing reentrancy.
+**Impact:** An attacker can drain all funds.
+**Exploit Reproduction Steps:**
+- Exploit succeeded using script: reentrancy_attack.py
+- Before balance: 1000000000000000000
+- After balance: 0
+- Gas used: 120000
+- Transaction hash: 0xabc...
+```
+
+### Security Score
+
+The security score is a **deterministic 0–100** number computed as:
+
+- Base: 100
+- Deductions per finding:
+  - Critical: -15
+  - High: -8
+  - Medium: -4
+  - Low: -1
+- If sandbox enabled: **-5** for each successfully reproduced exploit (capped).
+
+**Risk Bands:**
+
+| Score  | Classification |
+|--------|----------------|
+| 90–100 | Secure         |
+| 75–89  | Minor Risk     |
+| 50–74  | Moderate Risk  |
+| 25–49  | High Risk      |
+| 0–24   | Critical Risk  |
+
+Use `hawki score findings.json` to see the score without generating a full report.
+
+### Guided Remediation
+
+Every finding now includes a `fix_snippet` populated by the **Remediation Engine**. The engine uses templates and AST context to generate accurate fixes. For example, a reentrancy finding might include:
+
+```solidity
+// Vulnerable code
+function withdraw() external {
+    uint amount = balances[msg.sender];
+    (bool success, ) = msg.sender.call{value: amount}("");
+    require(success);
+    balances[msg.sender] = 0;
+}
+
+// Recommended fix
+function withdraw() external nonReentrant {
+    uint amount = balances[msg.sender];
+    balances[msg.sender] = 0;
+    (bool success, ) = msg.sender.call{value: amount}("");
+    require(success);
+}
+```
+
+### Telemetry (Opt‑In)
+
+When you run `hawki scan --telemetry`, Hawk‑i collects **anonymous** data:
+
+- Total scans performed
+- Findings per severity
+- Simulation success rate (if sandbox enabled)
+- Hawk‑i version
+- Execution mode
+
+Data is stored locally in `~/.hawki/metrics.json` and can be viewed with `hawki metrics`. If you opt in, aggregated statistics may be sent to a public endpoint to power the community metrics badge. **No source code, repository names, or IPs are ever collected.**
+
+**View your metrics:**
+```bash
+hawki metrics
+```
+
+**Example output:**
+```
+Total scans: 42
+Total findings: 87 (Critical: 12, High: 23, Medium: 31, Low: 21)
+```
+
+### CLI Reference
+
+The main command is `hawki`. Available subcommands:
+
+| Subcommand | Description |
+|------------|-------------|
+| `scan`     | Perform a one‑time security scan. |
+| `monitor`  | Continuously monitor a repository or contract. |
+| `report`   | Generate a report from existing findings. |
+| `score`    | Calculate the security score from a findings file. |
+| `metrics`  | Display local telemetry statistics. |
+| `simulate` | Run a specific exploit simulation (advanced). |
+
+**`hawki scan` options:**
+```
+hawki scan <target> [options]
+  -v, --verbose               Enable debug logging
+  -o, --output-dir DIR         Report output directory (default: ./hawki_reports)
+  --ai                         Enable AI reasoning
+  --ai-model MODEL              LLM model (e.g., openai/gpt-4)
+  --api-key KEY                 API key for LLM
+  --sandbox                     Run exploit simulation (requires Docker)
+  --format {md,json,html,pdf}   Output report format (if omitted, legacy JSON)
+  --telemetry                   Opt in to anonymous usage metrics
+```
+
+**`hawki report` options:**
+```
+hawki report [options]
+  -i, --input FILE    Findings JSON file (default: latest)
+  -o, --output-dir DIR Output directory
+  -f, --format FORMAT  Output format (md, json, html, pdf)
+```
+
+**`hawki score`**:
+```
+hawki score findings.json [-v]
+```
+
+**`hawki metrics`**:
+```
+hawki metrics [-v]
+```
 
 ### CI/CD Integration
 
 Hawk‑i provides a dedicated script `scripts/ci_pipeline.py` that auto‑detects GitHub Actions or GitLab CI and formats output accordingly.
 
 **GitHub Actions example (`.github/workflows/hawki.yml`):**
-
 ```yaml
 name: Hawk-i Security Scan
 on: [push, pull_request]
@@ -133,8 +329,9 @@ jobs:
         run: python scripts/ci_pipeline.py .
 ```
 
-**GitLab CI example (`.gitlab-ci.yml`):**
+The script exits with code `1` if any **HIGH** severity findings are detected, allowing you to fail the pipeline.
 
+**GitLab CI example (`.gitlab-ci.yml`):**
 ```yaml
 hawki-scan:
   image: python:3.11
@@ -147,212 +344,55 @@ hawki-scan:
       codequality: gl-code-quality-report.json
 ```
 
-The script exits with code `1` if any **HIGH** severity findings are detected, allowing you to fail the pipeline.
-
 ### Ecosystem Integrations
 
 Use the helper script `scripts/deploy_helpers.py` to integrate with popular development tools.
 
 #### Foundry
-
 ```bash
 python scripts/deploy_helpers.py foundry /path/to/forge-project --ai
 ```
 
 #### Hardhat
-
 ```bash
 python scripts/deploy_helpers.py hardhat /path/to/hardhat-project
 ```
 
 #### Remix
-
 ```bash
 python scripts/deploy_helpers.py remix /path/to/remix-workspace
 ```
 
 #### Generate a human‑readable audit report
-
 ```bash
 python scripts/deploy_helpers.py readme /path/to/report.json --output AUDIT.md
 ```
-
-### AI Configuration
-
-Hawk‑i uses [LiteLLM](https://docs.litellm.ai/) to support multiple LLM providers. You can set your API key in three ways (listed in order of precedence):
-
-1. **Command‑line argument** `--api-key` – takes highest priority.
-2. **Environment variable** – set the corresponding variable for your provider (see table below).
-3. **`.env` file** – if you prefer to keep keys in a file, you can load it manually (see instructions).
-
-| Provider   | Model example                     | Environment variable |
-|------------|-----------------------------------|----------------------|
-| Google Gemini | `gemini/gemini-1.5-flash`       | `GEMINI_API_KEY`     |
-| OpenAI        | `openai/gpt-4`                   | `OPENAI_API_KEY`     |
-| Anthropic     | `anthropic/claude-3-haiku-20240307` | `ANTHROPIC_API_KEY` |
-
-#### Persistent API Key Setup
-
-- **Using environment variables (recommended)**  
-  Add the export line to your shell profile (`~/.bashrc`, `~/.zshrc`, or `~/.profile`):
-  ```bash
-  export GEMINI_API_KEY="your-key"
-  ```
-  Then reload: `source ~/.bashrc`. After this, you can run `hawki scan --ai` without the `--api-key` flag.
-
-- **Using a `.env` file**  
-  Hawk‑i does not load `.env` automatically, but you can use `python-dotenv` to load it before running:
-  ```bash
-  pip install python-dotenv
-  echo "GEMINI_API_KEY=your-key" > .env
-  python -c "from dotenv import load_dotenv; load_dotenv()" && hawki scan . --ai
-  ```
-  For convenience, you can create a small wrapper script that loads the `.env` file.
-
-### Adding Custom Rules, Prompts, or Attack Scripts
-
-All dynamic components are auto‑discovered – just drop a file in the corresponding directory.
-
-- **Static rules**: `hawki/core/static_rule_engine/rules/` (Python classes inheriting from `BaseRule`)
-- **Prompt templates**: `hawki/core/ai_engine/prompt_templates/` (JSON files with `system` and `user` fields)
-- **Attack scripts**: `hawki/core/exploit_sandbox/attack_scripts/` (Python scripts that use `web3.py` and exit with code `0` on success)
-- **Watchers**: `hawki/core/monitoring/watchers/` (Python classes inheriting from `Watcher`)
-
----
-
-## 🔧 Troubleshooting
-
-Here are solutions to common issues you might encounter while using Hawk‑i.
-
-### `hawki: command not found` after pip install
-
-**Problem:** The `hawki` command is not available in your terminal after installation.
-
-**Solution:**  
-- Ensure your `pip` is up‑to‑date:  
-  ```bash
-  pip install --upgrade pip
-  ```
-- Reinstall Hawk‑i with the `--force-reinstall` flag:  
-  ```bash
-  pip install --force-reinstall hawki
-  ```
-- If you're using a virtual environment, make sure it's activated (you should see `(venv)` in your prompt).  
-- As a fallback, you can always run Hawk‑i using the module syntax:  
-  ```bash
-  python -m cli.hawki_cli scan ./demo
-  ```
-
-### Docker: Report files not saved on host
-
-**Problem:** When running Hawk‑i in Docker, the report is generated but not visible on your host machine.
-
-**Solution:**  
-Mount a host directory to the container’s report location. By default, reports are saved to `/home/hawki/hawki_reports/` inside the container. Use the `-v` flag to bind‑mount a host directory:
-
-```bash
-docker run --rm \
-  -v $(pwd)/demo:/repo \
-  -v $(pwd)/hawki_reports:/home/hawki/hawki_reports \
-  hawki:latest scan /repo
-```
-
-Now the report will appear in `./hawki_reports` on your host.
-
-### Docker image build fails or cannot find image
-
-**Problem:** The Docker image fails to build, or `hawki-sandbox:latest` is not found.
-
-**Solution:**  
-- Ensure Docker is installed and running (`docker info`).  
-- Your user must have permission to run Docker. On Linux, you may need to add yourself to the `docker` group or use `sudo`.  
-- If the image is missing, the sandbox will attempt to build it automatically. This may take a few minutes the first time. Let it complete without interrupting (Ctrl+C will abort the build).
-
-### Web3.py middleware import errors
-
-**Problem:** Errors like `cannot import name 'geth_poa_middleware' from 'web3.middleware'`.
-
-**Solution:**  
-This occurs because the import path for `geth_poa_middleware` changed in newer versions of web3.py. We've included a compatibility layer in Hawk‑i, but if you still encounter issues, try updating web3.py:
-
-```bash
-pip install --upgrade web3
-```
-
-If the problem persists, please open an issue on GitHub.
-
-### AI analysis fails with "API key not valid"
-
-**Problem:** When using `--ai`, you see an error about an invalid API key.
-
-**Solution:**  
-- Provide a valid API key via `--api-key`, environment variable, or `.env` file (see [AI Configuration](#ai-configuration)).  
-- For Google Gemini, ensure you have enabled the Generative Language API in your Google Cloud console and that the key is correct.  
-- LiteLLM expects the key to be set as `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` depending on the provider.
-
-### `pkgutil` errors during rule discovery
-
-**Problem:** Errors like `AttributeError: 'PosixPath' object has no attribute 'startswith'` when loading rules.
-
-**Solution:**  
-This was a bug in early versions and has been fixed. Update to the latest Hawk‑i:
-
-```bash
-pip install --upgrade hawki
-```
-
-### Monitor shows "Path is not a Git repository" repeatedly
-
-**Problem:** The `repo_commit_watcher` logs a warning every few seconds because the target directory is not a Git repository.
-
-**Solution:**  
-This is normal – the watcher is designed to monitor Git repos. If you don't need commit monitoring, disable that watcher by removing it from your configuration, or simply ignore the messages. The warning is logged only once per check cycle, not continuously.
-
-### Sandbox fails with "Image not found" but Docker is installed
-
-**Problem:** The sandbox tries to build the image but fails with a "not found" error.
-
-**Solution:**  
-- Check that the Docker daemon is running: `systemctl status docker` (Linux) or check Docker Desktop (macOS/Windows).  
-- Ensure your user has permission to access Docker. You can test with `docker run hello-world`.  
-- If the build is interrupted (e.g., by Ctrl+C), remove any partially built images:  
-  ```bash
-  docker rmi hawki-sandbox:latest
-  ```
-  Then run the scan again – the image will be rebuilt.
-
-### Report files are empty or missing findings
-
-**Problem:** The scan completes but the JSON report contains no findings, even though you expect some.
-
-**Solution:**  
-- Check that your contracts are Solidity files (`.sol`) and are in the scanned directory.  
-- If you're using the demo suite, ensure the Hardhat node is running and contracts are deployed.  
-- Run without `--ai` and `--sandbox` first to verify static rules are working.  
-- Increase logging verbosity with `--verbose` to see what Hawk‑i is doing.
-
-### Still stuck?
-
-If none of the above solves your problem, please [open an issue](https://github.com/0xSemantic/hawki/issues) with:
-- The exact command you ran
-- The full error output
-- Your environment (OS, Python version, Hawk‑i version)
-
-We'll help you get back on track!
 
 ---
 
 ## 🧪 Demo Suite
 
-To help you understand Hawk‑i’s capabilities and to test your own contributions, we’ve built a **dedicated demo suite** of intentionally vulnerable contracts. The suite includes:
+We’ve built a **dedicated demo suite** of intentionally vulnerable contracts to help you understand Hawk‑i’s capabilities and to test your contributions.
 
-- `VulnerableToken.sol` – integer overflow & unchecked send
-- `ReentrancyDemo.sol` – classic reentrancy bug
-- `AccessControlTest.sol` – missing access control
-- `DelegateCallExample.sol` – unsafe delegatecall
-- `MysteryLogic.sol` – subtle rounding error (AI‑only detection)
+The suite includes **30 vulnerable contracts**, one for each rule, covering:
+- Reentrancy
+- Access control bypass
+- Delegatecall misuse
+- Oracle manipulation
+- Flash loan attacks
+- Governance vote manipulation
+- Signature replay
+- Integer overflows
+- And more…
 
-### Run the Demo
+### Quick Demo (with Docker)
+
+```bash
+docker build -f demo/Dockerfile.demo -t hawki-demo .
+docker run --rm hawki-demo
+```
+
+### Manual Demo
 
 ```bash
 cd demo
@@ -360,14 +400,7 @@ npm install           # install Hardhat dependencies
 npx hardhat node      # start local blockchain (keep open)
 # In another terminal:
 npx hardhat run scripts/deploy.js --network localhost
-hawki scan . --ai --sandbox
-```
-
-For a fully containerized demo (no local setup required):
-
-```bash
-docker build -f demo/Dockerfile.demo -t hawki-demo .
-docker run --rm hawki-demo
+hawki scan . --ai --sandbox --format html --telemetry
 ```
 
 See the [demo README](demo/README.md) for detailed instructions and expected output.
@@ -379,21 +412,23 @@ See the [demo README](demo/README.md) for detailed instructions and expected out
 ```
 hawki/
 ├── core/
-│   ├── repo_intelligence/      # Repo cloning & Solidity parsing
-│   ├── static_rule_engine/     # Static analysis & dynamic rule loading
-│   ├── ai_engine/               # LLM orchestration & prompt management
-│   ├── exploit_sandbox/         # Docker‑based exploit simulation
-│   ├── monitoring/              # Continuous monitoring & alerts
-│   └── data_layer/              # Report generation & persistence
-├── cli/                          # Command‑line interface
-├── scripts/                      # CI/CD and integration helpers
-├── docker/                       # Dockerfile and compose
-├── demo/                         # Vulnerable contracts for testing
-├── tests/                         # Unit tests
-├── pyproject.toml                 # Package metadata
-├── CONTRIBUTING.md                # Contribution guidelines
-├── CONTRIBUTORS.md                # List of contributors
-└── README.md                      # This file
+│   ├── repo_intelligence/          # Repo cloning & Solidity parsing
+│   ├── static_rule_engine/         # Static analysis & dynamic rule loading (30+ rules)
+│   ├── ai_engine/                   # LLM orchestration & prompt management
+│   ├── exploit_sandbox/             # Docker‑based exploit simulation
+│   ├── remediation_engine/          # Context‑aware fix snippet generation
+│   ├── telemetry/                    # Opt‑in anonymous metrics
+│   ├── monitoring/                   # Continuous monitoring & alerts
+│   └── data_layer/                   # Report generation (ARS v2) & persistence
+├── cli/                              # Command‑line interface
+├── scripts/                          # CI/CD and integration helpers
+├── docker/                           # Dockerfile and compose
+├── demo/                             # Vulnerable contracts for testing
+├── tests/                            # Unit tests
+├── pyproject.toml                    # Package metadata
+├── CONTRIBUTING.md                    # Contribution guidelines
+├── CONTRIBUTORS.md                    # List of contributors
+└── README.md                          # This file
 ```
 
 ---
@@ -421,6 +456,8 @@ Hawk‑i builds upon excellent open‑source projects:
 - [Docker](https://www.docker.com/) for sandboxing.
 - [Web3.py](https://web3py.readthedocs.io/) for blockchain interaction.
 - [GitPython](https://gitpython.readthedocs.io/) for repository handling.
+- [matplotlib](https://matplotlib.org/) for chart generation (optional).
+- [Jinja2](https://jinja.palletsprojects.com/) for templated reports.
 
 Special thanks to all contributors and the Web3 security community.
 
@@ -434,8 +471,14 @@ Special thanks to all contributors and the Web3 security community.
 - [x] **Phase 4** – Continuous monitoring & alerts
 - [x] **Phase 5** – CI/CD & ecosystem integrations
 - [x] **Phase 6** – Deployment (PyPI, Docker, CLI)
-- [ ] **Phase 7** – Dashboard & real‑time visualisation
-- [ ] **Phase 8** – Intelligence network & community rules
+- [x] **Phase 7 – v0.7.0 Intelligence & Reporting Upgrade**
+  - Audit‑grade reporting (ARS v2)
+  - 30 vulnerability rules
+  - Security score
+  - Guided remediation engine
+  - Opt‑in telemetry
+- [ ] **Phase 8** – Dashboard & real‑time visualisation
+- [ ] **Phase 9** – Intelligence network & community rules marketplace
 
 ---
 

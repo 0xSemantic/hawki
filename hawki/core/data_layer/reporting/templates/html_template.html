@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hawk‑i Audit Report</title>
+    <style>
+        body {
+            background-color: #0c0c0c;
+            color: #e5e5e5;
+            font-family: 'Inter', sans-serif;
+            margin: 2rem;
+        }
+        h1, h2, h3 {
+            color: #687F97;
+        }
+        pre {
+            background-color: #1e1e1e;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #687F97;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Fira Code', monospace;
+            color: #d4d4d4;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #2a2a2a;
+            padding: 0.5rem;
+            text-align: left;
+        }
+        th {
+            background-color: #1e1e1e;
+            color: #687F97;
+        }
+        .summary-box {
+            background-color: #151515;
+            border: 1px solid #2a2a2a;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .score {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .score.secure { color: #4CAF50; }
+        .score.minor { color: #8BC34A; }
+        .score.moderate { color: #FFC107; }
+        .score.high { color: #FF9800; }
+        .score.critical { color: #F44336; }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🦅 Hawk‑i Audit Report</h1>
+    <p><strong>Generated:</strong> {{ generated_at }}</p>
+
+    <div class="summary-box">
+        <h2>📊 Executive Summary</h2>
+        <ul>
+            <li><strong>Mode:</strong> {{ scan_metadata.mode }} (AI: {{ scan_metadata.ai_enabled }}, Sandbox: {{ scan_metadata.sandbox_enabled }})</li>
+            <li><strong>Repository:</strong> {{ repo_data.path }} ({{ repo_data.type }})</li>
+            <li><strong>Contracts Scanned:</strong> {{ scan_metadata.total_scanned_contracts }}</li>
+            <li><strong>Files Analyzed:</strong> {{ scan_metadata.total_files }}</li>
+            <li><strong>Total Findings:</strong> {{ total_findings }}</li>
+            <li><strong>Severity Breakdown:</strong> Critical: {{ severity_counts.Critical or 0 }}, High: {{ severity_counts.High or 0 }}, Medium: {{ severity_counts.Medium or 0 }}, Low: {{ severity_counts.Low or 0 }}</li>
+            <li><strong>Simulation Success Rate:</strong> {{ simulation_success_rate or "N/A" }}</li>
+            <li><strong>Security Score:</strong> <span class="score {{ score.classification.lower().replace(' ', '-') }}">{{ score.score }}/100 – {{ score.classification }}</span></li>
+        </ul>
+        {% if not scan_metadata.ai_enabled %}
+        <p><em>AI reasoning was not enabled during this scan.</em></p>
+        {% endif %}
+        {% if not scan_metadata.sandbox_enabled %}
+        <p><em>Exploit simulation was not executed.</em></p>
+        {% endif %}
+    </div>
+
+    <h2>📈 Vulnerability Breakdown</h2>
+    <h3>Severity Distribution</h3>
+    {% if 'severity_pie.png' in chart_paths %}
+    <img src="charts/severity_pie.png" alt="Severity Pie Chart">
+    {% else %}
+    <p>Chart not available.</p>
+    {% endif %}
+
+    <h3>Vulnerability Types (Top 10)</h3>
+    {% if 'type_bar.png' in chart_paths %}
+    <img src="charts/type_bar.png" alt="Type Bar Chart">
+    {% else %}
+    <p>Chart not available.</p>
+    {% endif %}
+
+    <h3>Severity Table</h3>
+    <table>
+        <tr><th>Severity</th><th>Count</th></tr>
+        <tr><td>Critical</td><td>{{ severity_counts.Critical or 0 }}</td></tr>
+        <tr><td>High</td><td>{{ severity_counts.High or 0 }}</td></tr>
+        <tr><td>Medium</td><td>{{ severity_counts.Medium or 0 }}</td></tr>
+        <tr><td>Low</td><td>{{ severity_counts.Low or 0 }}</td></tr>
+    </table>
+
+    <h2>🔍 Detailed Findings</h2>
+    {% for f in findings %}
+    <div style="margin-bottom: 3rem;">
+        <h3>{{ f.id }}: {{ f.title }} ({{ f.severity }})</h3>
+        <p><strong>File:</strong> {{ f.file }}:{{ f.line }}</p>
+        <p><strong>Vulnerable Code:</strong></p>
+        <pre><code>{{ f.vulnerable_snippet }}</code></pre>
+        <p><strong>Recommended Fix:</strong></p>
+        <pre><code>{{ f.fix_snippet }}</code></pre>
+        <p><strong>Explanation:</strong> {{ f.explanation }}</p>
+        <p><strong>Impact:</strong> {{ f.impact }}</p>
+        {% if f.exploit_steps %}
+        <p><strong>Exploit Reproduction Steps:</strong></p>
+        <ol>
+            {% for step in f.exploit_steps %}
+            <li>{{ step }}</li>
+            {% endfor %}
+        </ol>
+        {% endif %}
+        <hr>
+    </div>
+    {% endfor %}
+
+    <h2>🧪 Simulation Metrics</h2>
+    <p><strong>Success Rate:</strong> {{ simulation_success_rate or "N/A" }}</p>
+    <p><strong>Total Exploits Attempted:</strong> {{ repo_data.sandbox_results | length if repo_data.sandbox_results else 0 }}</p>
+    {% if repo_data.sandbox_results %}
+    <table>
+        <tr><th>Attack</th><th>Success</th><th>Before</th><th>After</th><th>Gas Used</th><th>Tx Hash</th></tr>
+        {% for res in repo_data.sandbox_results %}
+        <tr>
+            <td>{{ res.attack_name }}</td>
+            <td>{{ res.success }}</td2021>
+            <td>{{ res.before_balance }}</td>
+            <td>{{ res.after_balance }}</td>
+            <td>{{ res.gas_used }}</td>
+            <td>{{ res.transaction_hash }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+    <hr>
+    <p><em>Report generated by Hawk‑i v0.7.0</em></p>
+</body>
+</html>

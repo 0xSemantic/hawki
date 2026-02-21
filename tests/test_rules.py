@@ -1,5 +1,5 @@
 # --------------------
-# File: tests/test_rules.py
+# File: tests/test_rules.py (updated)
 # --------------------
 """
 Unit tests for static rules.
@@ -20,7 +20,11 @@ class TestRules(unittest.TestCase):
         }]
         findings = rule.run_check(contract_data)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0]["rule"], "Reentrancy")
+        # Check fields set by the rule itself
+        self.assertEqual(findings[0]["title"], "Potential reentrancy vulnerability")
+        self.assertEqual(findings[0]["severity"], "Critical")
+        self.assertIn("function_name", findings[0])
+        self.assertEqual(findings[0]["function_name"], "withdraw")
 
     def test_engine_discovery(self):
         engine = RuleEngine()

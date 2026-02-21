@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "address public owner;\nconstructor(address _owner) {\n    require(_owner != address(0), \"Invalid owner\");\n    owner = _owner;\n}"
+}

@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function _internalFunction() internal {\n    // ...\n}"
+}

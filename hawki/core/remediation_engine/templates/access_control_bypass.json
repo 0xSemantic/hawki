@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function {{function_name}}() {{visibility}} onlyOwner {\n    // function body remains\n}"
+}

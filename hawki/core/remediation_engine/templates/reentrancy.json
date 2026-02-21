@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function {{function_name}}() {{visibility}} nonReentrant {\n    // Checks-Effects-Interactions pattern\n    uint amount = balances[msg.sender];\n    balances[msg.sender] = 0;\n    (bool success, ) = msg.sender.call{value: amount}(\"\");\n    require(success, \"Transfer failed\");\n}"
+}

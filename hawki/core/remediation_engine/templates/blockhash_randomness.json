@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "// Use Chainlink VRF instead\nuint256 randomness = requestRandomness(keyHash, fee);"
+}

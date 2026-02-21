@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "uint256 nonce = nonces[owner]++;\nbytes32 hash = keccak256(abi.encodePacked(owner, amount, nonce, deadline));\nrequire(usedNonces[hash] == false, \"Signature already used\");\nusedNonces[hash] = true;"
+}

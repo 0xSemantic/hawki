@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "unchecked {\n    // Add explicit overflow check\n    require(x <= type(uint256).max - y, \"overflow\");\n    z = x + y;\n}"
+}

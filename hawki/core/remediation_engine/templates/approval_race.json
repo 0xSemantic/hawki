@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function approve(address spender, uint256 amount) public returns (bool) {\n    require((amount == 0) || (allowance[msg.sender][spender] == 0), \"Use increaseAllowance instead\");\n    allowance[msg.sender][spender] = amount;\n    emit Approval(msg.sender, spender, amount);\n    return true;\n}"
+}

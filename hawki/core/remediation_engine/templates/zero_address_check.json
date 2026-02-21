@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "require(to != address(0), \"Invalid address\");"
+}

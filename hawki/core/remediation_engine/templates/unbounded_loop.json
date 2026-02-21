@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "// Use pagination\nfunction processItems(uint start, uint count) external {\n    for (uint i = start; i < start + count && i < array.length; i++) {\n        // process\n    }\n}"
+}

@@ -8,7 +8,7 @@ We welcome contributions from everyone – seasoned Web3 developers, security re
 
 ## 📜 Code of Conduct
 
-By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md) (if available). Please be respectful, constructive, and considerate in all interactions.
+By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md). Please be respectful, constructive, and considerate in all interactions.
 
 ---
 
@@ -37,7 +37,7 @@ source venv/bin/activate   # On Windows: venv\Scripts\activate
 pip install -e .           # Install in editable mode
 ```
 
-If you plan to run the demo contracts, you’ll also need Node.js and Hardhat:
+If you plan to run the demo contracts or exploit sandbox, you’ll also need Node.js and Hardhat:
 
 ```bash
 cd demo
@@ -67,13 +67,12 @@ We follow a simple GitHub flow:
 2. **Make your changes** – see the guidelines below.
 3. **Write or update tests** to cover your changes.
 4. **Run the tests** again to ensure they pass.
-5. **Commit your changes** with a clear, descriptive message:
+5. **Commit your changes** with a clear, descriptive message using [Conventional Commits](https://www.conventionalcommits.org/):
    ```
    feat(rule): add reentrancy guard detection
    fix(parser): handle nested contract declarations
    docs(readme): update installation instructions
    ```
-   We use [Conventional Commits](https://www.conventionalcommits.org/) style.
 6. **Push to your fork** and open a Pull Request against the `main` branch.
 
 ---
@@ -91,7 +90,7 @@ We follow a simple GitHub flow:
 ### Solidity (for demo contracts and attack scripts)
 
 - Follow the [Solidity Style Guide](https://docs.soliditylang.org/en/latest/style-guide.html).
-- Comment intentional vulnerabilities clearly (e.g., `// VULNERABILITY: ...`).
+- Comment intentional vulnerabilities clearly (e.g., `// VULNERABILITY: reentrancy`).
 
 ### Self‑Documenting Code
 
@@ -110,12 +109,16 @@ Produces a structured representation for further analysis.
 
 ### Dynamic Discovery
 
-If you add a new module that should be auto‑discovered (e.g., a static rule, attack script, prompt template, or watcher), simply place it in the corresponding directory – the system will load it automatically. No need to register it manually.
+If you add a new module that should be auto‑discovered, simply place it in the corresponding directory – the system will load it automatically. No manual registration needed.
 
-- **Static rules**: `hawki/core/static_rule_engine/rules/`
-- **Prompt templates**: `hawki/core/ai_engine/prompt_templates/`
-- **Attack scripts**: `hawki/core/exploit_sandbox/attack_scripts/`
-- **Watchers**: `hawki/core/monitoring/watchers/`
+| Component               | Directory                                                |
+|-------------------------|----------------------------------------------------------|
+| Static rules            | `hawki/core/static_rule_engine/rules/`                   |
+| Prompt templates        | `hawki/core/ai_engine/prompt_templates/`                 |
+| Attack scripts          | `hawki/core/exploit_sandbox/attack_scripts/`             |
+| Watchers                | `hawki/core/monitoring/watchers/`                        |
+| Remediation templates   | `hawki/core/remediation_engine/templates/`               |
+| Report templates        | `hawki/core/data_layer/reporting/templates/`             |
 
 ---
 
@@ -128,29 +131,111 @@ If you add a new module that should be auto‑discovered (e.g., a static rule, a
   ```
 - If you add a new rule, create a test in `tests/test_rules.py` or a dedicated file.
 - Mock external services (like LLM calls) to avoid flaky tests.
+- Aim for at least 85% test coverage overall.
 
 ---
 
 ## 🧩 Adding a New Static Rule
 
+As of v0.7.0, every rule must provide not only detection logic but also explanation, impact, and fix templates. This ensures reports are complete even when AI is disabled.
+
 1. Create a new `.py` file in `hawki/core/static_rule_engine/rules/`.
 2. Define a class that inherits from `BaseRule` (imported from the `rules` package).
-3. Implement the `run_check(self, contract_data)` method. It should return a list of findings (dictionaries) with at least:
-   - `"rule"`: short name (e.g., `"Reentrancy"`)
-   - `"severity"`: `"HIGH"`, `"MEDIUM"`, `"LOW"`, or `"INFO"`
-   - `"description"`: human‑readable explanation
-   - `"location"`: string indicating where the issue was found (file/contract/function)
-4. (Optional) Write a unit test in `tests/test_rules.py`.
+3. **Required class attributes**:
+   - `severity` – one of `"Critical"`, `"High"`, `"Medium"`, `"Low"`.
+   - `explanation_template` – a string describing why the issue is dangerous.
+   - `impact_template` – a string describing potential consequences (fund loss, DoS, etc.).
+   - `fix_template` – a string with placeholders (e.g., `{{function}}`) for the remediation engine.
+4. Implement the `run_check(self, contract_data)` method. It should return a list of findings (dictionaries). Each finding must include at least:
+   - `"title"`: short description
+   - `"severity"`: same as class attribute (or override per finding)
+   - `"file"`: relative path
+   - `"line"`: line number
+   - `"vulnerable_snippet"`: the exact code lines
+   - (The `explanation`, `impact`, and `fix_snippet` fields will be populated automatically from the class attributes/remediation engine.)
+5. Write a unit test in `tests/test_rules.py` that verifies detection on a purposely vulnerable contract.
 
-Example:
+Example skeleton:
+
 ```python
+# --------------------
+# File: hawki/core/static_rule_engine/rules/reentrancy.py
+# --------------------
 from . import BaseRule
 
-class MyNewRule(BaseRule):
+class ReentrancyRule(BaseRule):
+    severity = "Critical"
+    explanation_template = "This function allows reentrant calls because it updates state after an external call."
+    impact_template = "An attacker can drain funds by recursively calling back before state updates."
+    fix_template = "Apply the checks‑effects‑interactions pattern and add a nonReentrant modifier."
+
     def run_check(self, contract_data):
         findings = []
         # ... detection logic ...
+        for match in detected:
+            findings.append({
+                "title": "Reentrancy in withdraw()",
+                "severity": self.severity,
+                "file": match.file,
+                "line": match.line,
+                "vulnerable_snippet": match.code,
+            })
         return findings
+```
+
+---
+
+## 💣 Adding a New Attack Script
+
+Attack scripts are used by the exploit sandbox to simulate vulnerabilities. In v0.7.0, they must return structured data to be included in reports and influence the security score.
+
+1. Create a `.py` file in `hawki/core/exploit_sandbox/attack_scripts/`.
+2. The script will be executed inside a Docker container with:
+   - A local Ethereum testnet (Anvil/Ganache) at `http://localhost:8545`.
+   - The vulnerable contract(s) already deployed.
+   - Environment variable `CONTRACT_ADDRESSES` containing a JSON dict of contract names to addresses.
+3. The script must output a JSON object (to stdout) with the following fields:
+   ```python
+   {
+       "success": bool,
+       "before_balance": int,      # e.g., attacker balance before
+       "after_balance": int,       # after exploit
+       "gas_used": int,
+       "transaction_hash": str,    # optional
+       "logs": str                  # optional, human‑readable details
+   }
+   ```
+4. Exit with code 0 on success (exploit worked) or non‑zero on failure (exploit failed or script error).
+
+You can use `web3.py` (pre‑installed in the sandbox image). Example skeleton:
+
+```python
+#!/usr/bin/env python3
+import os, json, sys
+from web3 import Web3
+
+w3 = Web3(Web3.HTTPProvider("http://localhost:8545"))
+contract_addresses = json.loads(os.environ["CONTRACT_ADDRESSES"])
+vault = w3.eth.contract(address=contract_addresses["Vault"], abi=...)
+
+attacker = w3.eth.accounts[1]
+before = w3.eth.get_balance(attacker)
+
+# perform exploit...
+tx_hash = vault.functions.attack().transact({'from': attacker})
+receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+after = w3.eth.get_balance(attacker)
+
+result = {
+    "success": True,
+    "before_balance": before,
+    "after_balance": after,
+    "gas_used": receipt.gasUsed,
+    "transaction_hash": tx_hash.hex(),
+    "logs": "Exploit succeeded"
+}
+print(json.dumps(result))
 ```
 
 ---
@@ -172,16 +257,28 @@ Example:
 
 ---
 
-## 💣 Adding a New Attack Script
+## 🛠️ Adding a New Remediation Template
 
-1. Create a `.py` file in `hawki/core/exploit_sandbox/attack_scripts/`.
-2. The script will be executed inside the sandbox container. It should:
-   - Connect to `http://localhost:8545` (the local blockchain).
-   - Read deployed contract addresses from the environment variable `CONTRACT_ADDRESSES` (JSON dict).
-   - Perform the exploit attempt.
-   - Exit with code `0` if the exploit succeeded, non‑zero otherwise.
-3. You can use `web3.py`; it is pre‑installed in the sandbox image.
-4. Add a shebang (`#!/usr/bin/env python3`) and make the script executable if desired.
+Remediation templates provide context‑aware fix snippets for vulnerabilities. They are JSON files placed in `hawki/core/remediation_engine/templates/`, named after the vulnerability (e.g., `reentrancy.json`).
+
+1. Create a `.json` file with the following structure:
+   ```json
+   {
+       "fix_snippet": "function {{function_name}}() {{visibility}} {\n    // Checks‑Effects‑Interactions\n    require({{condition}});\n    {{state_updates}}\n    (bool success, ) = {{external_call}}.call{value: {{amount}}}(\"\");\n    require(success);\n}"
+   }
+   ```
+2. Use double curly braces `{{placeholder}}` for variables that will be replaced by the remediation engine (using AST context).
+3. The filename should match the rule’s identifier (e.g., rule class name) or a common vulnerability name.
+
+---
+
+## 📄 Adding a New Report Template
+
+Report templates control the layout of generated reports. They are stored in `hawki/core/data_layer/reporting/templates/` and can be Markdown, HTML, or JSON.
+
+1. Create a new template file (e.g., `custom_report.md`).
+2. Use placeholders like `{{executive_summary}}`, `{{findings_table}}`, etc. Refer to existing templates for available variables.
+3. To make the new format available, you may need to extend `ReportGeneratorV2` to handle it. For now, stick to the existing formats unless you’re willing to update the generator.
 
 ---
 
@@ -200,8 +297,9 @@ Example:
 ## 📚 Documentation
 
 - Update the `README.md` if you change user‑facing functionality.
-- For new features, add a section in the relevant part of the documentation.
+- For new features, add a section in the relevant part of the documentation (e.g., `docs/`).
 - Keep docstrings up‑to‑date.
+- If you add a new rule, mention it in the list of supported vulnerabilities (e.g., in the docs or a separate file).
 
 ---
 

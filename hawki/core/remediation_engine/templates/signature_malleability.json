@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "// Use OpenZeppelin's ECDSA\nusing ECDSA for bytes32;\naddress signer = hash.toEthSignedMessageHash().recover(signature);\nrequire(signer == expectedSigner, \"Invalid signature\");"
+}

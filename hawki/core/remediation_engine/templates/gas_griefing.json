@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "// Limit loop iterations\nuint maxIterations = 100;\nfor (uint i = 0; i < array.length && i < maxIterations; i++) {\n    // process\n}"
+}

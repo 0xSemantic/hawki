@@ -1,0 +1,3 @@
+{
+  "fix_snippet": "function vote(uint proposalId, uint support) public {\n    uint votes = token.getPastVotes(msg.sender, block.number - 1);\n    _vote(proposalId, support, votes);\n}"
+}
