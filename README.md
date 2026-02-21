@@ -4,7 +4,6 @@
 *Open‑source, privacy‑first security intelligence for smart contracts*
 
 [![PyPI version](https://img.shields.io/pypi/v/hawki)](https://pypi.org/project/hawki/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/hawki)](https://pypi.org/project/hawki/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dw/hawki)](https://pypi.org/project/hawki/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/levichinecherem/hawki)](https://hub.docker.com/r/0xsemantic/hawki)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
