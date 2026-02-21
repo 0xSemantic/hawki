@@ -5,7 +5,6 @@
 Unsafe external call with state change after: detect external calls that are followed by state changes.
 """
 
-import re
 from . import BaseRule
 
 class UnsafeExternalCallRule(BaseRule):

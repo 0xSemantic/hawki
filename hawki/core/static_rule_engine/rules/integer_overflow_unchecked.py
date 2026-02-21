@@ -5,7 +5,6 @@
 Integer overflow in unchecked blocks: detect arithmetic inside `unchecked` blocks that could overflow.
 """
 
-import re
 from . import BaseRule
 
 class IntegerOverflowUncheckedRule(BaseRule):

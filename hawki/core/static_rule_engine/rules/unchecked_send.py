@@ -5,6 +5,7 @@
 Unchecked send: detect send() or transfer() calls without checking return value.
 """
 
+import re
 from . import BaseRule
 
 class UncheckedSendRule(BaseRule):
@@ -27,15 +28,12 @@ class UncheckedSendRule(BaseRule):
 
     def run_check(self, contract_data):
         findings = []
-        import re
-        # Look for send or transfer that is not inside an if or require
-        # This is simplified: we'll flag any send/transfer that appears without "if" or "require" on the same line.
-        pattern = re.compile(r'(send|transfer)\(')
+        call_pattern = re.compile(r'(send|transfer)\(')
         for contract in contract_data:
             source = contract.get("source", "")
             lines = source.split('\n')
             for i, line in enumerate(lines):
-                if re.search(r'(send|transfer)\(', line) and not re.search(r'(if|require)\s*\(', line):
+                if call_pattern.search(line) and not re.search(r'(if|require)\s*\(', line):
                     findings.append(self._create_finding(
                         title="Unchecked send/transfer",
                         file=contract.get("path", ""),
@@ -43,4 +41,4 @@ class UncheckedSendRule(BaseRule):
                         vulnerable_snippet=line.strip(),
                     ))
         return findings
-# EOF: hawki/core/static_rule_engine/rules/unchecked_send.py
+# EOF 

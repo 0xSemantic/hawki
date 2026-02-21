@@ -1,43 +1,43 @@
 # --------------------
-# File: cli/hawki_cli.py (updated for v0.7.0 with telemetry)
+# File: cli/hawki_cli.py (final ruff‑clean with noqa)
 # --------------------
 """
-Hawk-i command‑line interface – v0.7.0 with telemetry.
+Hawk-i command‑line interface – v0.7.0 with telemetry and rich output.
 """
 
 import argparse
+import importlib.util
+import json
 import logging
 import sys
 from pathlib import Path
 
+# Rich imports for beautiful CLI
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+from rich.table import Table
+from rich.traceback import install
+
+# Install rich traceback handler for pretty errors
+install()
+
+# Ensure we can import hawkki modules (must be before local imports)
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from hawki.core.repo_intelligence.indexer import RepositoryIndexer
-from hawki.core.static_rule_engine import RuleEngine
-from hawki.core.ai_engine.reasoning_agent import ReasoningAgent
-from hawki.core.exploit_sandbox.sandbox_manager import SandboxManager
-from hawki.core.data_layer.report_manager import ReportManager
-from hawki.core.monitoring import Monitor
-from hawki.core.telemetry import MetricsCollector, MetricsExporter, MetricsStore
+# Local imports – ruff E402 is ignored because of path manipulation above
+from hawki.core.ai_engine.reasoning_agent import ReasoningAgent  # noqa: E402
+from hawki.core.data_layer.report_manager import ReportManager  # noqa: E402
+from hawki.core.exploit_sandbox.sandbox_manager import SandboxManager  # noqa: E402
+from hawki.core.repo_intelligence.indexer import RepositoryIndexer  # noqa: E402
+from hawki.core.static_rule_engine import RuleEngine  # noqa: E402
+from hawki.core.telemetry import MetricsCollector, MetricsExporter, MetricsStore  # noqa: E402
 
-# Try to import optional dependencies for reporting
-try:
-    import jinja2
-    JINJA2_AVAILABLE = True
-except ImportError:
-    JINJA2_AVAILABLE = False
+# Check optional dependencies
+JINJA2_AVAILABLE = importlib.util.find_spec("jinja2") is not None
+MATPLOTLIB_AVAILABLE = importlib.util.find_spec("matplotlib") is not None
+PDFKIT_AVAILABLE = importlib.util.find_spec("pdfkit") is not None
 
-try:
-    import matplotlib
-    MATPLOTLIB_AVAILABLE = True
-except ImportError:
-    MATPLOTLIB_AVAILABLE = False
-
-try:
-    import pdfkit
-    PDFKIT_AVAILABLE = True
-except ImportError:
-    PDFKIT_AVAILABLE = False
+console = Console()
 
 def setup_logging(verbose: bool = False):
     level = logging.DEBUG if verbose else logging.INFO
@@ -56,7 +56,7 @@ def scan_command(args):
 
     ai_agent = None
     if args.ai:
-        logger.info("AI analysis enabled")
+        console.log("[cyan]AI analysis enabled[/cyan]")
         ai_agent = ReasoningAgent(orchestrator=None)
         if args.ai_model or args.api_key:
             from hawki.core.ai_engine.llm_orchestrator import LLMOrchestrator
@@ -64,44 +64,52 @@ def scan_command(args):
 
     # Check for optional dependencies if specific formats requested
     if args.format in ("html", "pdf") and not JINJA2_AVAILABLE:
-        logger.error("HTML/PDF reports require jinja2. Install with 'pip install hawki[reports]'")
+        console.print("[red]HTML/PDF reports require jinja2. Install with 'pip install hawki[reports]'[/red]")
         sys.exit(1)
     if args.format == "pdf" and not PDFKIT_AVAILABLE:
-        logger.error("PDF reports require pdfkit. Install with 'pip install hawki[pdf]'")
+        console.print("[red]PDF reports require pdfkit. Install with 'pip install hawki[pdf]'[/red]")
         sys.exit(1)
     if args.format in ("html", "pdf", "md") and not JINJA2_AVAILABLE:
-        # Markdown also uses jinja2 now
-        logger.error("Markdown/HTML/PDF reports require jinja2. Install with 'pip install hawki[reports]'")
+        console.print("[red]Markdown/HTML/PDF reports require jinja2. Install with 'pip install hawki[reports]'[/red]")
         sys.exit(1)
 
     try:
-        logger.info(f"Scanning target: {args.target}")
-        repo_data = indexer.index(args.target)
+        console.print(f"[bold green]Scanning target:[/bold green] {args.target}")
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task("[cyan]Indexing repository...", total=1)
+            repo_data = indexer.index(args.target)
+            progress.update(task, advance=1)
 
-        total_files = len([p for p in Path(repo_data["path"]).rglob("*.sol")])
-        total_contracts = sum(len(c.get("contracts", [])) for c in repo_data.get("contracts", []))
+            total_files = len([p for p in Path(repo_data["path"]).rglob("*.sol")])
+            total_contracts = sum(len(c.get("contracts", [])) for c in repo_data.get("contracts", []))
 
-        logger.info(f"Running {len(engine.rules)} static rules...")
-        static_findings = engine.run_all(repo_data["contracts"])
+            task = progress.add_task(f"[cyan]Running {len(engine.rules)} static rules...", total=1)
+            static_findings = engine.run_all(repo_data["contracts"])
+            progress.update(task, advance=1)
 
-        ai_findings = []
-        if ai_agent:
-            logger.info("Running AI reasoning...")
-            ai_findings = ai_agent.analyse_contracts(repo_data["contracts"])
-            logger.info(f"AI found {len(ai_findings)} potential issues")
+            ai_findings = []
+            if ai_agent:
+                task = progress.add_task("[cyan]Running AI reasoning...", total=1)
+                ai_findings = ai_agent.analyse_contracts(repo_data["contracts"])
+                progress.update(task, advance=1)
 
-        all_findings = static_findings + ai_findings
+            all_findings = static_findings + ai_findings
 
-        sandbox_results = []
-        docker_available = False
-        if args.sandbox:
-            logger.info("Starting exploit simulation sandbox...")
-            repo_path = Path(repo_data["path"]) if repo_data["type"] == "remote" else Path(repo_data["path"])
-            sandbox = SandboxManager(repo_path)
-            sandbox_results = sandbox.run_all()
-            logger.info(f"Sandbox completed with {len(sandbox_results)} attack script results")
-            repo_data["sandbox_results"] = sandbox_results
-            docker_available = True
+            sandbox_results = []
+            docker_available = False
+            if args.sandbox:
+                task = progress.add_task("[cyan]Starting exploit simulation sandbox...", total=1)
+                repo_path = Path(repo_data["path"]) if repo_data["type"] == "remote" else Path(repo_data["path"])
+                sandbox = SandboxManager(repo_path)
+                sandbox_results = sandbox.run_all()
+                progress.update(task, advance=1)
+                repo_data["sandbox_results"] = sandbox_results
+                docker_available = True
 
         scan_metadata = {
             "ai_enabled": args.ai,
@@ -110,7 +118,7 @@ def scan_command(args):
             "total_scanned_contracts": total_contracts,
             "total_files": total_files,
             "mode": "minimal",
-            "version": "0.7.0",  # should come from package metadata
+            "version": "0.7.0",
         }
         if args.ai and args.sandbox:
             scan_metadata["mode"] = "full"
@@ -130,63 +138,173 @@ def scan_command(args):
         else:
             report_path = report_mgr.save_findings(all_findings, repo_data)
 
-        logger.info(f"Scan complete. Total findings: {len(all_findings)}")
-        print(f"\nReport saved to: {report_path}")
+        console.print(f"[bold green]Scan complete.[/bold green] Total findings: {len(all_findings)}")
+        console.print(f"[cyan]Report saved to:[/cyan] {report_path}")
 
         # Telemetry (opt‑in)
         if args.telemetry:
-            logger.info("Collecting anonymous usage metrics (opt‑in)")
+            console.log("[cyan]Collecting anonymous usage metrics (opt‑in)[/cyan]")
             collector = MetricsCollector()
-            metrics = collector.collect_from_scan(scan_metadata, repo_data, all_findings)
-            # Attempt to export in background? For simplicity, we export now.
+            collector.collect_from_scan(scan_metadata, repo_data, all_findings)
             exporter = MetricsExporter()
             exporter.export()
-            print("Telemetry data recorded locally and sent anonymously (thank you!).")
+            console.print("[green]Telemetry data recorded locally and sent anonymously (thank you!).[/green]")
         else:
-            print("Telemetry not enabled. Use --telemetry to help us improve Hawk‑i.")
+            console.print("[dim]Telemetry not enabled. Use --telemetry to help us improve Hawk‑i.[/dim]")
 
     except Exception as e:
         logger.error(f"Scan failed: {e}", exc_info=True)
+        console.print_exception()
         sys.exit(1)
     finally:
         indexer.cleanup()
 
 def monitor_command(args):
     """Handle 'monitor' subcommand."""
-    # ... (unchanged from previous) ...
-    # We'll keep it as is; no telemetry for monitor.
+    from hawki.core.monitoring import Monitor
+    config = {}
+    if args.config:
+        with open(args.config, 'r') as f:
+            config = json.load(f)
+    else:
+        if args.target:
+            config = {
+                "repocommitwatcher": {
+                    "repo_path": args.target,
+                    "branch": args.branch or "main"
+                }
+            }
+        if args.contract_address:
+            config["deployedcontractwatcher"] = {
+                "rpc_url": args.rpc_url or "http://localhost:8545",
+                "contract_address": args.contract_address
+            }
+
+    monitor = Monitor(
+        watcher_configs=config,
+        state_dir=args.state_dir,
+        alert_log_file=args.alert_log
+    )
+    interval = args.interval or 60
+    console.print("[cyan]Monitoring started. Press Ctrl+C to stop.[/cyan]")
+    try:
+        monitor.run_forever(interval_seconds=interval)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Monitoring stopped by user.[/yellow]")
+        sys.exit(0)
 
 def report_command(args):
     """Generate a report from an existing findings file."""
-    # ... (unchanged) ...
+    logger = logging.getLogger(__name__)
+    from hawki.core.data_layer.report_manager import ReportManager
+    report_mgr = ReportManager(output_dir=args.output_dir)
+
+    input_path = args.input
+    if not input_path:
+        report_files = sorted(Path(args.output_dir or ".").glob("report_*.json"))
+        if not report_files:
+            logger.error("No findings file specified and no previous scan found.")
+            sys.exit(1)
+        input_path = report_files[-1]
+
+    try:
+        with open(input_path, "r") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to load findings file {input_path}: {e}")
+        sys.exit(1)
+
+    findings = data.get("findings", [])
+    repo_data = data.get("repository", {"path": "unknown", "type": "unknown"})
+    if "sandbox_results" in data:
+        repo_data["sandbox_results"] = data["sandbox_results"]
+
+    scan_metadata = {
+        "ai_enabled": False,
+        "sandbox_enabled": "sandbox_results" in data,
+        "docker_available": False,
+        "total_scanned_contracts": len(repo_data.get("contracts", [])),
+        "total_files": 0,
+        "mode": "unknown"
+    }
+
+    output_format = args.format or "md"
+    report_path = report_mgr.generate_report(
+        findings=findings,
+        repo_data=repo_data,
+        scan_metadata=scan_metadata,
+        output_format=output_format,
+    )
+    console.print(f"[green]Report saved to:[/green] {report_path}")
 
 def score_command(args):
     """Calculate and display security score from findings file."""
-    # ... (unchanged) ...
+    logger = logging.getLogger(__name__)
+    from hawki.core.data_layer.reporting.scoring_engine import SecurityScoreEngine
+
+    input_path = args.input
+    if not input_path:
+        logger.error("No findings file specified.")
+        sys.exit(1)
+
+    try:
+        with open(input_path, "r") as f:
+            data = json.load(f)
+    except Exception as e:
+        logger.error(f"Failed to load findings file {input_path}: {e}")
+        sys.exit(1)
+
+    findings = data.get("findings", [])
+    sandbox_results = data.get("sandbox_results")
+
+    engine = SecurityScoreEngine()
+    score_result = engine.calculate(
+        findings=findings,
+        sandbox_results=sandbox_results,
+        ai_enabled=False,
+    )
+
+    # Display score in a nice table
+    table = Table(title="Security Score", show_header=False)
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("Score", f"{score_result['score']}/100")
+    table.add_row("Classification", score_result['classification'])
+    if args.verbose:
+        for key, value in score_result['deductions'].items():
+            table.add_row(key, str(value))
+    console.print(table)
 
 def metrics_command(args):
     """Display local telemetry stats."""
-    from hawki.core.telemetry import MetricsStore
     store = MetricsStore()
     all_metrics = store.get_all()
     if not all_metrics:
-        print("No telemetry data recorded yet.")
+        console.print("[yellow]No telemetry data recorded yet.[/yellow]")
         return
 
     total_scans = len(all_metrics)
-    # Compute aggregated stats
     total_findings = sum(sum(m["findings"].values()) for m in all_metrics)
     critical = sum(m["findings"].get("Critical", 0) for m in all_metrics)
     high = sum(m["findings"].get("High", 0) for m in all_metrics)
     medium = sum(m["findings"].get("Medium", 0) for m in all_metrics)
     low = sum(m["findings"].get("Low", 0) for m in all_metrics)
 
-    print(f"Total scans: {total_scans}")
-    print(f"Total findings: {total_findings} (Critical: {critical}, High: {high}, Medium: {medium}, Low: {low})")
+    table = Table(title="Telemetry Summary")
+    table.add_column("Metric", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("Total scans", str(total_scans))
+    table.add_row("Total findings", str(total_findings))
+    table.add_row("Critical", str(critical))
+    table.add_row("High", str(high))
+    table.add_row("Medium", str(medium))
+    table.add_row("Low", str(low))
+    console.print(table)
+
     if args.verbose:
-        print("\nDetailed records:")
+        console.print("\n[bold]Detailed records:[/bold]")
         for m in all_metrics:
-            print(f"  {m['timestamp']} - mode: {m['mode']}, findings: {m['findings']}")
+            console.print(f"  {m['timestamp']} - mode: {m['mode']}, findings: {m['findings']}")
 
 def main():
     parser = argparse.ArgumentParser(description="Hawk-i Security Scanner v0.7.0")
@@ -206,7 +324,7 @@ def main():
     scan_parser.add_argument("--telemetry", action="store_true", help="Opt in to anonymous usage metrics")
     scan_parser.set_defaults(func=scan_command)
 
-    # Monitor command (unchanged)
+    # Monitor command
     monitor_parser = subparsers.add_parser("monitor", help="Continuously monitor targets")
     monitor_parser.add_argument("target", nargs="?", help="Local Git repository path (optional if config provided)")
     monitor_parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
@@ -244,5 +362,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# EOF: cli/hawki_cli.py

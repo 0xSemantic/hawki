@@ -10,7 +10,7 @@ Integrates scoring engine and chart renderer, and links sandbox results to findi
 import json
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from datetime import datetime
 
 from .scoring_engine import SecurityScoreEngine

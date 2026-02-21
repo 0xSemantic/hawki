@@ -7,7 +7,6 @@ If the admin of an upgradeable proxy can be changed by anyone without access con
 an attacker could take over the contract.
 """
 
-import re
 from . import BaseRule
 
 class UpgradeAdminRule(BaseRule):
@@ -34,10 +33,7 @@ class UpgradeAdminRule(BaseRule):
 
     def run_check(self, contract_data):
         findings = []
-        # Look for functions that change an admin-like variable
-        admin_keywords = ["admin", "owner", "governance", "implementation"]
         for contract in contract_data:
-            source = contract.get("source", "")
             for func in contract.get("functions", []):
                 func_name = func.get("name", "")
                 body = func.get("body", "")
@@ -55,7 +51,6 @@ class UpgradeAdminRule(BaseRule):
                             vulnerable_snippet=snippet,
                         ))
                 # Also look for assignments to admin variable without checks
-                # This is simplified; we could check for `admin = ...` in public functions
                 if "admin =" in body and "require" not in body and "modifier" not in body:
                     line = func.get("line", 1)
                     snippet = f"function {func_name}() ... // contains admin ="
@@ -66,4 +61,4 @@ class UpgradeAdminRule(BaseRule):
                         vulnerable_snippet=snippet,
                     ))
         return findings
-# EOF: hawki/core/static_rule_engine/rules/upgrade_admin.py
+# EOF

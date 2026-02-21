@@ -33,6 +33,7 @@ dependencies = [
     "web3>=6.15.0",
     "py-solc-x>=2.0.0",
     "eth-account>=0.8.0",
+    "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]

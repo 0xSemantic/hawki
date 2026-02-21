@@ -5,7 +5,6 @@
 Denial of Service via unexpected revert: functions that can be forced to revert by an attacker.
 """
 
-import re
 from . import BaseRule
 
 class DoSRevertRule(BaseRule):

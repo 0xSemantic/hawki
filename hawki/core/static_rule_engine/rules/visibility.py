@@ -5,7 +5,6 @@
 Improper visibility: functions that should be internal are marked public.
 """
 
-import re
 from . import BaseRule
 
 class VisibilityRule(BaseRule):

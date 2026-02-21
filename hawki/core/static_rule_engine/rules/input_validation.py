@@ -5,7 +5,6 @@
 Improper input validation: missing bounds checks on user-supplied values.
 """
 
-import re
 from . import BaseRule
 
 class InputValidationRule(BaseRule):

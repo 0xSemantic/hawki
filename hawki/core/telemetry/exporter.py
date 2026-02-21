@@ -5,7 +5,6 @@
 Exports aggregated metrics to a public endpoint (opt‑in only).
 """
 
-import json
 import logging
 import os
 import requests

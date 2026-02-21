@@ -3,7 +3,6 @@
 # --------------------
 import pytest
 import json
-from pathlib import Path
 from hawki.core.remediation_engine import RemediationEngine
 
 @pytest.fixture

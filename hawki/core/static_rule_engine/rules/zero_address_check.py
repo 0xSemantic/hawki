@@ -5,7 +5,6 @@
 Missing zero‑address check: functions that accept addresses should check for zero address to prevent burning tokens or locking funds.
 """
 
-import re
 from . import BaseRule
 
 class ZeroAddressCheckRule(BaseRule):

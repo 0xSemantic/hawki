@@ -1,7 +1,6 @@
 # --------------------
 # File: tests/core/reporting/test_scoring.py
 # --------------------
-import pytest
 from hawki.core.data_layer.reporting.scoring_engine import SecurityScoreEngine
 
 def test_no_findings():

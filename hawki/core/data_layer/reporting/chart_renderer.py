@@ -8,7 +8,7 @@ Uses matplotlib if available; otherwise logs a warning and returns empty list.
 
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 

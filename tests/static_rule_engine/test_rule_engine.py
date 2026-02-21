@@ -1,8 +1,7 @@
 # --------------------
 # File: tests/core/static_rule_engine/test_rule_engine.py
 # --------------------
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 from hawki.core.static_rule_engine import RuleEngine
 from hawki.core.static_rule_engine.rules import BaseRule
 

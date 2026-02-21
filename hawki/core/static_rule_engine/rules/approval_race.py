@@ -5,7 +5,6 @@
 Improper ERC20 approval race condition: detect missing allowance checks that could lead to double spending.
 """
 
-import re
 from . import BaseRule
 
 class ApprovalRaceRule(BaseRule):
